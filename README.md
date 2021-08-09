@@ -347,25 +347,23 @@ We will call `renderItem` function to create a Component for each item inside th
 ```javascript
 
 //inside the HomeFlatlist Class
-renderItem = data => {
+renderItem = (item) => 
+    <View>
+      <TouchableOpacity>
+      <View style={{flexDirection:"row"}}>
+        <View style={{flex:2}}>
+        <Text>{item.name}</Text>
 
-<View style={{flexDirection:"row"}}/>
+        </View>
+        
+      <TouchableOpacity style={{flex:1}} onPress={()=>Alert.alert("Favoriting this item")}> 
+        <Ionicons name="heart" size={15} 
+        color={item.favorited?"tomato":"grey"}></Ionicons>
+      </TouchableOpacity>
+      </View>
+      </TouchableOpacity>
 
-<View className="recipe-name" style={{flex:2}}>
-  <Text>{data.item.name}</Text>
-</View>
-
-<View className='favorited' style={{flex:1}}>
-{data.item.favorited?"Favorited":"Not Favorited"}
-</View>
-
-<View className="favorite-action" style={{flex:1}}>
-<TouchableOpacity onPress={()=>Alert.alert("Trying to favorite this item")}>
-<Ionicons name="heart" size={15}></Ionicons>
-</TouchableOpacity>
-
-</View>
-<View>
+    </View>
 
 //we will also update the render() part 
 
@@ -395,6 +393,7 @@ renderItem={item=>this.renderItem(item)}
 Now we can run `npm run ios` again to see a list of recipes, all of them are not favorited (because we have not enabled buttons to favorite them)
 
 
+
 # Updating AsyncStorage
 
 We will see that the each rendered item of the flatlist will have three parts: its name, its favorite state, and a button to favorite it (not quite implemented right). 
@@ -404,18 +403,6 @@ We want to combine the last two parts: a heart button that will indicate if it i
 Clear heart -> favorited:false -> Press it -> set favorited:true, update datastore, store item to local storage (AKA AsyncStorage)
 Red heart -> favorited:true -> Press it -> set favorited:false, update datastore, delete item from local storage
 
-So the button component will look something like this
-This is just the logic, not actual code
-
-```javascript
-<TouchableOpacity onPress={ if favorited===false,set favorited to false, store item to Async storage;
-                              if favorited===true, set favorited to true, delete item from Async storage}>
-
-<Ionicons name="heart" size={15} color={data.item.favorited?"red":"white"></Ionicons>
-
-</TouchableOpacity>
-
-```
 
 
 With that being said, let's create our function `selectItem`, which will replace the logic in the `onPress`. 
@@ -425,36 +412,49 @@ Because we will update the current item's `favorited` attribute, we need to upda
 We will first modify on `this.state.datastore`, then we will call `this.setState({datastore:this.state.datastore})` to update it. 
 
 ```javascript
-selectItem = async(data) => {
+selectItem = async(item) => {
 
 
-      data.item.favorited = !data.item.favorited;
-      if (!data.item.favorited) {
-        await removeObject(data.item.id);
-      } else {
-        await setObjectValue(data.item.id,data.item);
-      }
-      const index = this.state.datastore.findIndex(
-       item => data.item.id === item.id
-      );
-      
-      this.state.datastore[index] = data.item;
-      
-      this.setState({
-       datastore: this.state.datastore,
-      });
-      };
-
+  item.favorited = !item.favorited;
+  if (!item.favorited) {
+    await removeObject(item.id);
+  } else {
+    await setObjectValue(item.id,item);
+  }
+  const index = this.state.datastore.findIndex(
+   i => item.id === i.id
+  );
+  
+  this.state.datastore[index] = item;
+  
+  this.setState({
+   datastore: this.state.datastore,
+  });
+  };
 ```
-Now let's re-write the button's code:
+Now let's re-write the renderItem's code:
 
 
 ```javascript
 
-<TouchableOpacity style={{flex:1}} onPress={()=>this.selectItem(data)}> 
+
+renderItem = (item) => 
+    <View>
+      <TouchableOpacity>
+      <View style={{flexDirection:"row"}}>
+        <View style={{flex:2}}>
+        <Text>{item.name}</Text>
+
+        </View>
+        
+      <TouchableOpacity style={{flex:1}} onPress={()=>this.selectItem(item)}> 
         <Ionicons name="heart" size={15} 
-        color={data.item.favorited?"red":"white"}></Ionicons>
-</TouchableOpacity>
+        color={item.favorited?"tomato":"grey"}></Ionicons>
+      </TouchableOpacity>
+      </View>
+      </TouchableOpacity>
+
+    </View>
 
 ```
 
